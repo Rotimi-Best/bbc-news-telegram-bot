@@ -1,4 +1,5 @@
 process.env["NTBA_FIX_319"] = 1; // fix promises error in node-telegram-bot-api
+const cron = require('node-cron');
 const FeedParser = require('feedparser');
 const TelegramBot = require('node-telegram-bot-api');
 const assert = require('assert');
@@ -40,7 +41,7 @@ function getUserDesc(user) {
 }
 
 // get articles
-setInterval(() => {
+// setInterval(() => {
 	request('http://feeds.bbci.co.uk/news/rss.xml')
 	.on('error', err => console.error(err.stack))
 	.pipe(new FeedParser())
@@ -48,7 +49,7 @@ setInterval(() => {
 	//.on('meta', meta => { console.log('meta') })
 	.on('data', article => notifyNewArticle(article))
 	//.on('end', () => { console.log('end') })
-}, 60 * 1000);
+// }, 60 * 1000);
 	
 function notifyNewArticle(article) {
 	if (articlesGuids[article.guid]) return;
@@ -64,6 +65,17 @@ function notifyNewArticle(article) {
 	}
 	articlesGuids[article.guid] = 1;
 }
+
+ 
+cron.schedule('* * * * *', () => {
+	request('http://feeds.bbci.co.uk/news/rss.xml')
+		.on('error', err => console.error(err.stack))
+		.pipe(new FeedParser())
+		.on('error', err => console.error(err.stack))
+		//.on('meta', meta => { console.log('meta') })
+		.on('data', article => notifyNewArticle(article))
+		//.on('end', () => { console.log('end') })
+});
 
 // save state
 setInterval(() => {
